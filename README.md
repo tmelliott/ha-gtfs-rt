@@ -78,7 +78,7 @@ Configuration variables:
   requests in an "Authorization" header.
 - **x_api_key** (_Optional_): If provided, this key will be sent with API
   requests in an "x-api-key" header.
-- **apikey_name** (_Optional_): If provided, the _api_key_ will be given this name in the header (used for providers that don't use a standard 'API_KEY' name)
+- **header_api_key_name** (_Optional_): If provided, the _api_key_ will be given this name in the header (used for providers that don't use a standard 'API_KEY' name)
 - **departures** (_Required_): A list of routes and departure locations to watch
 - **route** (_Optional_): The name of the gtfs route
 - **stopid** (_Optional_): The stopid for the location you want etas for
