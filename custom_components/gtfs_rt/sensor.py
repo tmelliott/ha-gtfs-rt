@@ -27,6 +27,7 @@ ATTR_NEXT_OCCUPANCY = "Next bus occupancy"
 CONF_API_KEY = 'api_key'
 CONF_APIKEY = 'apikey'
 CONF_X_API_KEY = 'x_api_key'
+CONF_HEADER_API_KEY_NAME = 'header_api_key_name'
 CONF_STOP_ID = 'stopid'
 CONF_ROUTE = 'route'
 CONF_DEPARTURES = 'departures'
@@ -44,7 +45,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_TRIP_UPDATE_URL): cv.string,
     vol.Optional(CONF_API_KEY): cv.string,
     vol.Optional(CONF_X_API_KEY): cv.string,
-    vol.Optional(CONF_APIKEY): cv.string,
+    vol.Optional(CONF_API_KEY): cv.string,
+    vol.Optional(CONF_HEADER_API_KEY_NAME): cv.string,
     vol.Optional(CONF_VEHICLE_POSITION_URL): cv.string,
     vol.Optional(CONF_DEPARTURES): [{
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
@@ -72,7 +74,7 @@ def due_in_minutes(timestamp):
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Get the Dublin public transport sensor."""
-    data = PublicTransportData(config.get(CONF_TRIP_UPDATE_URL), config.get(CONF_VEHICLE_POSITION_URL), config.get(CONF_API_KEY), config.get(CONF_X_API_KEY), config.get(CONF_APIKEY))
+    data = PublicTransportData(config.get(CONF_TRIP_UPDATE_URL), config.get(CONF_VEHICLE_POSITION_URL), config.get(CONF_API_KEY), config.get(CONF_X_API_KEY), config.get(CONF_HEADER_API_KEY_NAME), config.get(CONF_APIKEY))
     sensors = []
     for departure in config.get(CONF_DEPARTURES):
         sensors.append(PublicTransportSensor(
@@ -148,16 +150,18 @@ class PublicTransportSensor(Entity):
 class PublicTransportData(object):
     """The Class for handling the data retrieval."""
 
-    def __init__(self, trip_update_url, vehicle_position_url=None, api_key=None, x_api_key=None, apikey=None):
+    def __init__(self, trip_update_url, vehicle_position_url=None, api_key=None, x_api_key=None, apikey=None, header_api_key_name=None):
         """Initialize the info object."""
         self._trip_update_url = trip_update_url
         self._vehicle_position_url = vehicle_position_url
         if api_key is not None:
             self._headers = {'Authorization': api_key}
         elif apikey is not None:
-            self._headers = {'apikey': apikey}    
+            self._headers = {'apikey': apikey}
         elif x_api_key is not None:
             self._headers = {'x-api-key': x_api_key}
+        elif header_api_key_name is not None:
+            self._headers = {header_api_key_name: apikey}
         else:
             self._headers = None
         self.info = {}
@@ -183,7 +187,7 @@ class PublicTransportData(object):
             _LOGGER.error("updating route status got {}:{}".format(response.status_code,response.content))
         feed.ParseFromString(response.content)
         departure_times = {}
-        
+
         for entity in feed.entity:
             if entity.HasField('trip_update'):
                 route_id = entity.trip_update.trip.route_id
